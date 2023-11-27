@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Construir Grafo</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="body">
+    <main>
+        <div class="mapa-grafo">
+            <div style="display: flex">
+                <button class="seletor" id="vertex">
+                    Vértice
+                </button>
+                <button class="seletor" id="edge">
+                    Aresta
+                </button>
+            </div>
+            <div id="map-container" style="position: relative; border: solid 10px purple;">
+                <img id="map" style="width: 450px; height: 450px;" src="/static/assets/images/transp.png"
+                    alt="area">
+            </div>
+            <form id="graph-form" action="/" method="POST">
+                <input type="hidden" id="points-data" name="points" value="">
+                <input type="hidden" id="edges-data" name="edges" value="">
+                <input class="sel-points" type="submit" value="Ação">
+                <!-- Trocar esse input para uma lista de algoritmos disponíveis -->
+            </form>
+        </div>
+    </main>
+    <script>
+        var selectedPoints = [];
+        var edges = [];
+
+        var mapContainer = document.getElementById('map-container');
+        var map = document.getElementById('map-container');
+        var pointCounter = 1;
+        var isVertexMode = true;
+
+        var ponto1 = null;
+        var ponto2 = null;
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'b' && ponto1 && ponto2) {
+                finalizarArestaEmConstrucao();
+            }
+        });
+
+        map.addEventListener('mousemove', function (event) {
+            if (!isVertexMode && ponto1) {
+                var pontoMouse = getMousePosition(event);
+                ajustarArestaEmConstrucao(pontoMouse);
+            }
+        });
+
+        map.addEventListener('click', function (event) {
+            if (isVertexMode) {
+                adicionarVertice(event);
+            } else {
+                adicionarOuConectarAresta(event);
+            }
+        });
+
+        function adicionarVertice(event) {
+            if (isVertexMode) {
+                var x = event.clientX - 15 - mapContainer.offsetLeft;
+                var y = event.clientY - 15 - mapContainer.offsetTop;
+
+                var nomeVertice = prompt("Insira o nome do vértice (deixe em branco para usar o contador):") || pointCounter;
+
+                selectedPoints.push({ x: x, y: y, nome: nomeVertice });
+
+                document.getElementById('points-data').value = JSON.stringify(selectedPoints);
+
+                var pointDiv = document.createElement('div');
+                pointDiv.className = 'point';
+                pointDiv.style.left = x + 'px';
+                pointDiv.style.top = y + 'px';
+                pointDiv.textContent = nomeVertice;
+                map.appendChild(pointDiv);
+
+                pointCounter++;
+            }
+        }
+
+        function adicionarOuConectarAresta(event) {
+            if (ponto1) {
+                var pontoClicado = getMousePosition(event);
+
+                if (ponto2 && ponto1.x === pontoClicado.x && ponto1.y === pontoClicado.y) {
+                    // O usuário clicou duas vezes no mesmo vértice, criando uma aresta de laço
+                    finalizarArestaEmConstrucao(true);
+                } else {
+                    ponto2 = pontoClicado;
+                    iniciarAresta();
+                }
+            } else {
+                ponto1 = getMousePosition(event);
+                iniciarAresta();
+            }
+        }
+
+        function iniciarAresta() {
+            arestaEmConstrucao = criarArestaEmConstrucao(ponto1);
+        }
+
+        function criarArestaEmConstrucao(pontoInicial) {
+            var arestaDiv = document.createElement('div');
+            arestaDiv.className = 'aresta-em-construcao aresta-dinamica';
+            arestaDiv.style.position = 'absolute';
+            arestaDiv.style.backgroundColor = 'blue';
+            arestaDiv.style.transformOrigin = 'left';
+            arestaDiv.style.height = '5px';
+            arestaDiv.style.width = '0';
+            arestaDiv.style.left = pontoInicial.x + 'px';
+            arestaDiv.style.top = pontoInicial.y + 'px';
+            map.appendChild(arestaDiv);
+            return arestaDiv;
+        }
+
+        function ajustarArestaEmConstrucao(pontoMouse) {
+            var angulo = Math.atan2(pontoMouse.y - ponto1.y, pontoMouse.x - ponto1.x);
+            var comprimento = Math.sqrt(Math.pow(pontoMouse.x - ponto1.x, 2) + Math.pow(pontoMouse.y - ponto1.y, 2));
+
+            arestaEmConstrucao.style.width = comprimento + 'px';
+            arestaEmConstrucao.style.transform = 'rotate(' + angulo + 'rad)';
+        }
+
+        function finalizarArestaEmConstrucao(ehArestaLaco) {
+            if (ponto1 && ponto2 && arestaEmConstrucao) {
+                var distancia = parseFloat(prompt('Insira a distância (km) para esta aresta:'));
+
+                if (!isNaN(distancia)) {
+                    arestaEmConstrucao.className = 'aresta aresta-dinamica';
+                    arestaEmConstrucao.setAttribute('data-weight', distancia);
+
+                    var arestaNome = "aresta_" + edges.length + 1;
+                    console.log(arestaNome)
+                    arestaEmConstrucao.setAttribute('data-name', arestaNome);
+
+                    var estiloAresta = window.getComputedStyle(arestaEmConstrucao);
+                    var estiloArestaJSON = {
+                        backgroundColor: estiloAresta.backgroundColor,
+                        width: estiloAresta.width,
+                        transform: estiloAresta.transform
+                    };
+
+                    edges.push({
+                        ponto1: ponto1,
+                        ponto2: ponto2,
+                        distancia: distancia,
+                        nome: arestaNome,
+                        style: estiloArestaJSON
+                    });
+                } else {
+                    map.removeChild(arestaEmConstrucao);
+                }
+
+                ponto1 = null;
+                ponto2 = null;
+                arestaEmConstrucao = null;
+            } else if (ehArestaLaco) {
+                ponto2 = ponto1; // Aresta de laço, ponto2 é igual a ponto1
+                finalizarArestaEmConstrucao();
+            }
+        }
+
+        var vertexButton = document.getElementById('vertex');
+        var edgeButton = document.getElementById('edge');
+
+        vertexButton.addEventListener('click', function () {
+            isVertexMode = true;
+            resetArestaConstrucao();
+        });
+
+        edgeButton.addEventListener('click', function () {
+            isVertexMode = false;
+            resetArestaConstrucao();
+        });
+
+        function resetArestaConstrucao() {
+            if (arestaEmConstrucao) {
+                map.removeChild(arestaEmConstrucao);
+                arestaEmConstrucao = null;
+                ponto1 = null;
+                ponto2 = null;
+            }
+        }
+
+        function getMousePosition(event) {
+            var rect = mapContainer.getBoundingClientRect();
+            var borderWidth = 10; // Largura da borda da área do mapa
+
+            var x = event.clientX - rect.left - borderWidth + 15;
+            var y = event.clientY - rect.top - borderWidth + 10;
+
+            return { x: x, y: y };
+        }
+
+    </script>
+</body>
+
+</html>
