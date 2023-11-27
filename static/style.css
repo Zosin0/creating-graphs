@@ -7,17 +7,19 @@ body {
     font-family: sans-serif;
 }
 
-.seletor{
+.seletor {
     background-color: blue;
     color: paleturquoise;
 }
+
 .mapa-grafo {
     display: flex;
     align-items: center;
     flex-direction: column;
     justify-content: center;
 }
-.point{
+
+.point {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -30,6 +32,12 @@ body {
     border-radius: 50%;
     position: absolute;
 }
-.edge{
 
+.arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 12px solid red;
 }

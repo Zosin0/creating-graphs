@@ -19,7 +19,8 @@
                 </button>
             </div>
             <div id="map-container" style="position: relative; border: solid 10px purple;">
-                <img id="map" style="width: 450px; height: 450px;" src="/static/assets/images/transp.png"
+                <img id="map" style="width: 450px; height: 450px;"
+                     src="/static/assets/images/transp.png"
                     alt="area">
             </div>
             <form id="graph-form" action="/" method="POST">
@@ -117,6 +118,12 @@
             arestaDiv.style.left = pontoInicial.x + 'px';
             arestaDiv.style.top = pontoInicial.y + 'px';
             map.appendChild(arestaDiv);
+
+            // Adiciona seta para arestas direcionadas
+            var arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            arestaDiv.appendChild(arrow);
+
             return arestaDiv;
         }
 
@@ -131,14 +138,14 @@
         function finalizarArestaEmConstrucao(ehArestaLaco) {
             if (ponto1 && ponto2 && arestaEmConstrucao) {
                 var distancia = parseFloat(prompt('Insira a distância (km) para esta aresta:'));
+                var direcionada = confirm('A aresta é direcionada?');
+                var nomeAresta = prompt('Insira o nome da aresta:');
 
                 if (!isNaN(distancia)) {
                     arestaEmConstrucao.className = 'aresta aresta-dinamica';
                     arestaEmConstrucao.setAttribute('data-weight', distancia);
-
-                    var arestaNome = "aresta_" + edges.length + 1;
-                    console.log(arestaNome)
-                    arestaEmConstrucao.setAttribute('data-name', arestaNome);
+                    arestaEmConstrucao.setAttribute('data-directed', direcionada);
+                    arestaEmConstrucao.setAttribute('data-name', nomeAresta || "");
 
                     var estiloAresta = window.getComputedStyle(arestaEmConstrucao);
                     var estiloArestaJSON = {
@@ -151,8 +158,9 @@
                         ponto1: ponto1,
                         ponto2: ponto2,
                         distancia: distancia,
-                        nome: arestaNome,
-                        style: estiloArestaJSON
+                        nome: nomeAresta || "",
+                        style: estiloArestaJSON,
+                        directed: direcionada
                     });
                 } else {
                     map.removeChild(arestaEmConstrucao);
